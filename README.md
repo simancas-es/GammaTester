@@ -25,6 +25,7 @@ gamma_tester.calculate(column_combination = combination)
 
 gamma_scores.append(gamma_tester.intercept)
 
+Graph comparing a naive implementation without pre-caching and this version:
 ![Naive vs half-optimized implementation](https://github.com/simancas-es/GammaTester/blob/main/naive_vs_optimized.jpg)
 
 
