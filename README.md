@@ -9,9 +9,9 @@ How is it used:
 
 1)You need:
 -A dataframe with the columns of the input vectors X
--A list with the columns that are always included in the calculations
+-A list with the columns names that are always included in the calculations
 -the Y values from dataframe[y_values].to_numpy()
--the combination of columns that are not FIXED columns that will be calculated
+-the combination of column names that are NOT FIXED columns that will be calculated
 
 2)The results are obtained from the .intercept and .slope parameters.
 The calculate function returns the deltas and gammas arrays (return self.deltas, self.gammas)
