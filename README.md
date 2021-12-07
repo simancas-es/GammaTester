@@ -21,7 +21,7 @@ gamma_tester = GammaTester(pandas_dataframe = scaled_df,
                              values_list = y,
                              p = 10)
 gamma_tester.preload()
-gamma_tester.calculate(column_combination = ['d','e','f']) <- if you are sure that there is no overlap between these combinations and the fixed columns you can check_collision = False and this is 20% faster.
+gamma_tester.calculate(column_combination = ['d','e','f'])
 
 gamma_tester.intercept
 gamma_tester.slope
