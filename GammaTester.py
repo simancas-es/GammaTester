@@ -102,10 +102,7 @@ class GammaTester:
         euclidean_distances = np.triu(self.basis_euclidean.copy())
         for col in column_combination:
             euclidean_distances+=self.precalculated_pairs[col]
-        # euclidean_distances=np.sum([euclidean_distances]+
-        #                            [self.precalculated_pairs[col] for col in column_combination],
-        #                            axis=0)
-
+        
         euclidean_distances = euclidean_distances**0.5    
         # print(f'euclidean_value (i,j) :\n {euclidean_distances}')
         
@@ -127,7 +124,8 @@ class GammaTester:
         
         # model = LinearRegression().fit(self.deltas,self.gammas)
         #y = mx+c
-        result = np.polyfit(self.deltas.T[0], self.gammas, 1, full=True)
+        # result = np.polyfit(self.deltas.T[0], self.gammas, 1, full=True)
+        result = np.linalg.lstsq(np. hstack([self.deltas,np.ones(shape = [p,1])]),self.gammas)
         m, c = result[0]
         res2 = result[1][0]
         
@@ -155,7 +153,7 @@ if __name__=="__main__":
         return columns,data,values_list
     
     
-    columns, row_list, values_list = inventarse_data(100,NUM_TRIES)
+    columns, row_list, values_list = inventarse_data(300,NUM_TRIES)
     df = pd.DataFrame(data=row_list, columns = columns)
     
     fixed_columns = []
@@ -169,7 +167,7 @@ if __name__=="__main__":
                       p=10)
 
     lp_wrapper = lp(gt2.calculate)
-    lp_wrapper(**dict(column_combination=combinations[0:100]))
+    lp_wrapper(**dict(column_combination=combinations[0:NUM_TRIES]))
     lp.print_stats()
 
     pass
