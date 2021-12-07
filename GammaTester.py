@@ -8,6 +8,8 @@ GAMMA TEST FOR INPUT SELECTION
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LinearRegression
+
+from line_profiler import LineProfiler
 from time import perf_counter
 
 class GammaTester:
@@ -18,7 +20,7 @@ class GammaTester:
         self.p=p
         
         self.pandas_dataframe = pandas_dataframe
-        self.fixed_columns_list = fixed_columns_list
+        self.fixed_columns_list = fixed_columns_list if fixed_columns_list is not None else []
         self.values_list=np.array(values_list)
         
         self.num_rows = None
@@ -28,6 +30,8 @@ class GammaTester:
                 
         self.basis_euclidean = None
         self.euclidean_matrix=None
+        self.terms_xeuclidean = None
+        self.terms_yeuclidean = None
         self.deltas= []
         self.gammas= []
         
@@ -39,6 +43,7 @@ class GammaTester:
         
         self.intercept=None
         self.slope=None
+
     
     def preload(self):
         #We calculate the unmuted Col[i] - C[j]
@@ -97,6 +102,10 @@ class GammaTester:
         euclidean_distances = np.triu(self.basis_euclidean.copy())
         for col in column_combination:
             euclidean_distances+=self.precalculated_pairs[col]
+        # euclidean_distances=np.sum([euclidean_distances]+
+        #                            [self.precalculated_pairs[col] for col in column_combination],
+        #                            axis=0)
+
         euclidean_distances = euclidean_distances**0.5    
         # print(f'euclidean_value (i,j) :\n {euclidean_distances}')
         
@@ -104,19 +113,29 @@ class GammaTester:
         euclidean_distances_symmetric = euclidean_distances + euclidean_distances.T
         indices_order = np.argsort(euclidean_distances_symmetric)
         euclidean_distances_symmetric.sort()
+        self.terms_xeuclidean = euclidean_distances_symmetric[:,1:p+1]**2
         # print(f'euclidean symmetric sorted :\n {euclidean_distances_symmetric}')
-        self.deltas = (euclidean_distances_symmetric[:,1:p+1]**2).sum(axis=0)/num_rows
+        self.deltas = (self.terms_xeuclidean).sum(axis=0)/num_rows
         # print(f'deltas :\n {deltas}')
         self.deltas = self.deltas.reshape(-1,1)
 
         
         y = self.values_list
         # print(f'y: \n{y} \n y ordered {y[indices_order]}')
-        self.gammas = ((y[indices_order][:,1:p+1].T-y)**2).sum(1)/num_rows/2
+        self.terms_yeuclidean = ((y[indices_order][:,1:p+1].T-y)**2)/2
+        self.gammas = (self.terms_yeuclidean).sum(1)/num_rows
         
-        model = LinearRegression().fit(self.deltas,self.gammas)
-        self.intercept=model.intercept_
-        self.slope=model.coef_
+        # model = LinearRegression().fit(self.deltas,self.gammas)
+        #y = mx+c
+        result = np.polyfit(self.deltas.T[0], self.gammas, 1, full=True)
+        m, c = result[0]
+        res2 = result[1][0]
+        
+        # self.intercept=model.intercept_
+        # self.slope=model.coef_
+        self.slope = m
+        self.intercept = c
+        self.res2 = res2
                        
         return self.deltas, self.gammas
 
@@ -126,36 +145,32 @@ if __name__=="__main__":
  
     # =============================================================================
     #     P E R F O R M A N C E 1
-    # =============================================================================
-    # import matplotlib.pyplot as plt
-    # NUM_TRIES = 100
-    # def inventarse_data(nrows,ncolumns):
-    #     columns = [str(i) for i in range(ncolumns)]
-    #     data = np.random.random_sample((nrows, ncolumns)) - 2
-    #     values_list = np.sin(data.sum(axis=1))
-    #     return columns,data,values_list
+    # =============================================================================   
+    
+    NUM_TRIES = 100
+    def inventarse_data(nrows,ncolumns):
+        columns = [str(i) for i in range(ncolumns)]
+        data = np.random.random_sample((nrows, ncolumns)) - 2
+        values_list = np.sin(data.sum(axis=1))
+        return columns,data,values_list
     
     
-    # columns, row_list, values_list = inventarse_data(100,NUM_TRIES)
-    # df = pd.DataFrame(data=row_list, columns = columns)
+    columns, row_list, values_list = inventarse_data(100,NUM_TRIES)
+    df = pd.DataFrame(data=row_list, columns = columns)
     
-    # fixed_columns = []
-    # combinations = [str(w) for w in range(0,NUM_TRIES)]   
+    fixed_columns = []
+    combinations = [str(w) for w in range(0,NUM_TRIES)]   
 
-    # t1_start = perf_counter()
-    # time_elapsed_2=[]
-    # gt2 = GammaTester(pandas_dataframe = df,
-    #                   fixed_columns_list = fixed_columns,
-    #                   values_list = values_list,
-    #                   p=3)
-    
-    # for i in range(0,NUM_TRIES):
-    #     gt2.calculate(column_combination=combinations[0:i])
-    #     time_elapsed_2.append(perf_counter()-t1_start)
+            
+    lp = LineProfiler()
+    gt2 = GammaTester(pandas_dataframe = df,
+                      fixed_columns_list = fixed_columns,
+                      values_list = values_list,
+                      p=10)
 
-    # plt.scatter(x=range(0,NUM_TRIES),y = time_elapsed_2,label = "Optimizado")
-    # plt.legend()
-    # plt.ylabel("ms")
-    # plt.xlabel("numero de columnas")
+    lp_wrapper = lp(gt2.calculate)
+    lp_wrapper(**dict(column_combination=combinations[0:100]))
+    lp.print_stats()
+
     pass
     
