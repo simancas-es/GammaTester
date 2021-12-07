@@ -8,13 +8,13 @@ This Class stores the product of Ci-Cj for each column so that it is not calcula
 How is it used:
 
 1)You need:
--A dataframe with the columns of the input vectors X
--A list with the columns NAMES that are always included in the calculations, this can be []
--the Y values from dataframe[y_values].to_numpy()
--the combination of column names that are NOT FIXED columns that will be calculated eg. ['a','b','c']
+- A dataframe with the columns of the input vectors X
+- A list with the columns NAMES that are always included in the calculations, this can be []
+- the Y values from dataframe[y_values].to_numpy()
+- the combination of column names that are NOT FIXED columns that will be calculated eg. ['a','b','c']
 
 2)The results are obtained from the .intercept and .slope parameters.
-The calculate function returns the deltas and gammas arrays (return self.deltas, self.gammas)
+- The calculate function returns the deltas and gammas arrays (return self.deltas, self.gammas)
 
 gamma_tester = GammaTester(pandas_dataframe = scaled_df,
                              fixed_columns_list = columns_always_included,
