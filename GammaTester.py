@@ -59,13 +59,13 @@ class GammaTester:
             #A2[0][1] is the squared result of the first row minus the second row
             self.basis_euclidean += np.array([A-x for x in A])**2
             #TODO: Improve symmetric matrix
-        
+        self.basis_euclidean = np.triu(self.basis_euclidean)
         changing_cols = [col for col in df.columns
-                         if col not in self.fixed_columns_list]
+                          if col not in self.fixed_columns_list]
         #Same saved-up combinations of Ci - Cj ^2 for the rest of the columns(not summed up yet)         
         self.precalculated_pairs = dict(zip(changing_cols,
                                             [np.triu(np.array([df[col].to_numpy()-x for x in df[col].to_numpy()])**2)
-                                                     for col in df]
+                                                     for col in changing_cols]
                                             )
                                         )
                                         
@@ -99,10 +99,15 @@ class GammaTester:
         
         #We calculate the sum of all the (Ci - Cj)**2 and the fixed rows
         #Then square the result and divide it by the number of rows
-        euclidean_distances = np.triu(self.basis_euclidean.copy())
+        
+        # euclidean_distances = np.triu(self.basis_euclidean.copy())
+        euclidean_distances = np.zeros(self.basis_euclidean.shape)
+        euclidean_distances+=self.basis_euclidean
         for col in column_combination:
             euclidean_distances+=self.precalculated_pairs[col]
-        
+
+
+
         euclidean_distances = euclidean_distances**0.5    
         # print(f'euclidean_value (i,j) :\n {euclidean_distances}')
         
@@ -110,10 +115,12 @@ class GammaTester:
         euclidean_distances_symmetric = euclidean_distances + euclidean_distances.T
         indices_order = np.argsort(euclidean_distances_symmetric)
         euclidean_distances_symmetric.sort()
+        # print(f'euclidean symmetric sorted {euclidean_distances_symmetric.shape}:\n {euclidean_distances_symmetric}')
         self.terms_xeuclidean = euclidean_distances_symmetric[:,1:p+1]**2
-        # print(f'euclidean symmetric sorted :\n {euclidean_distances_symmetric}')
+        # print(f'terms_xeuclidean {self.terms_xeuclidean.shape}:\n {self.terms_xeuclidean}')
+
         self.deltas = (self.terms_xeuclidean).sum(axis=0)/num_rows
-        # print(f'deltas :\n {deltas}')
+        # print(f'deltas :\n {self.deltas}')
         self.deltas = self.deltas.reshape(-1,1)
 
         
@@ -125,7 +132,7 @@ class GammaTester:
         # model = LinearRegression().fit(self.deltas,self.gammas)
         #y = mx+c
         # result = np.polyfit(self.deltas.T[0], self.gammas, 1, full=True)
-        result = np.linalg.lstsq(np. hstack([self.deltas,np.ones(shape = [p,1])]),self.gammas)
+        result = np.linalg.lstsq(np. hstack([self.deltas,np.ones(shape = [p,1])]),self.gammas,rcond = None)
         m, c = result[0]
         res2 = result[1][0]
         
@@ -168,7 +175,7 @@ if __name__=="__main__":
 
     lp_wrapper = lp(gt2.calculate)
     lp_wrapper(**dict(column_combination=combinations[0:NUM_TRIES]))
-    lp.print_stats()
+    # lp.print_stats()
 
     pass
     
