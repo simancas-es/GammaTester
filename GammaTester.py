@@ -15,8 +15,14 @@ from time import perf_counter
 class GammaTester:
 
     def __init__(self,pandas_dataframe = None, fixed_columns_list = None,
-                 row_list=None,values_list=None,
+                 values_list=None,
                  p=10):
+        """
+        pandas df with all the data, columns that will be precalculated,
+         values_list is the target column.to_numpy
+         
+         after loading, .calculate( column_combination, p neighbours,)
+        """
         self.p=p
         
         self.pandas_dataframe = pandas_dataframe
@@ -81,6 +87,14 @@ class GammaTester:
     
     def calculate(self, column_combination = None,
                             p= None, check_collision = True):
+        """
+        column_combination: columnas con las que se calculara el gt
+        p: numero de neighbours,
+        check_collision: comprobar si hay duplicidad en las columnas
+        
+        returns deltas, gammas
+        generates gt.slope, intercept, res2
+        """
         
         if not self.LOADED:
             raise ValueError('GammaTester not preloaded. Use preload() or reinitialize.')
@@ -116,6 +130,7 @@ class GammaTester:
         indices_order = np.argsort(euclidean_distances_symmetric)
         euclidean_distances_symmetric.sort()
         # print(f'euclidean symmetric sorted {euclidean_distances_symmetric.shape}:\n {euclidean_distances_symmetric}')
+        #Cada uno de los terminos c1-c2 al cuadrado dentro de el calculo del delta i 
         self.terms_xeuclidean = euclidean_distances_symmetric[:,1:p+1]**2
         # print(f'terms_xeuclidean {self.terms_xeuclidean.shape}:\n {self.terms_xeuclidean}')
 
